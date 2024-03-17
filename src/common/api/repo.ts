@@ -1,0 +1,113 @@
+import { UserConfigInfoModel } from '@/common/model'
+import { INIT_REPO_DESC, PICX_INIT_REPO_MSG } from '@/common/constant'
+import request from '@/utils/request'
+
+/**
+ * 获取仓库列表
+ * @param owner
+ * @param page
+ */
+export const getRepoList = (owner: string, page = 1) => {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve) => {
+    const tmpList: any[] = await request({
+      url: `users/${owner}/repos`,
+      method: 'GET',
+      params: {
+        type: 'owner', // all | owner | member
+        sort: 'created', // created | updated | pushed | full_name
+        direction: 'desc', // asc | desc
+        per_page: 100,
+        page
+      }
+    })
+
+    if (tmpList && tmpList.length) {
+      resolve(
+        tmpList
+          .filter((v: any) => !v.fork && !v.private)
+          .map((x: any) => ({
+            value: x.name,
+            label: x.name
+          }))
+      )
+    } else {
+      resolve(null)
+    }
+  })
+}
+
+/**
+ * 获取所有的仓库列表（当前限制在 300 个以内）
+ * @param owner
+ */
+export const getAllRepoList = async (owner: string) => {
+  const tmpList = []
+  // eslint-disable-next-line no-plusplus
+  for (let i = 1; i <= 3; i++) {
+    const res = await getRepoList(owner, i)
+    if (res) {
+      // @ts-ignore
+      tmpList.push(...res)
+    }
+  }
+
+  return Promise.resolve(tmpList.length ? tmpList : null)
+}
+
+/**
+ * 初始化仓库 README
+ * @param userConfigInfo
+ */
+export const initRepoREADME = async (userConfigInfo: UserConfigInfoModel) => {
+  const README = ``
+  const { owner, repo, branch } = userConfigInfo
+
+  // GitHub Git database API 不支持在空仓库上操作，需要先初始化空仓库
+  // 仓库为空时，新建一个 README 文件来初始化仓库
+  await request({
+    url: `/repos/${owner}/${repo}/contents/README.md`,
+    method: 'PUT',
+    data: {
+      message: PICX_INIT_REPO_MSG,
+      branch,
+      content: window.btoa(README)
+    },
+    noShowErrMsg: true
+  })
+}
+
+/**
+ * 创建仓库
+ * @param token
+ */
+export const createRepo = (token: string, repo: string) => {
+  return request({
+    url: '/user/repos',
+    method: 'POST',
+    data: {
+      name: repo,
+      description: INIT_REPO_DESC,
+      private: false
+    },
+    headers: { Authorization: `Bearer ${token}` },
+    success422: true,
+    noShowErrMsg: true
+  })
+}
+
+/**
+ * 获取仓库信息
+ * @param owner
+ * @param repo
+ */
+export const getRepoInfo = (token: string, owner: string, repo: string) => {
+  return request({
+    url: `/repos/${owner}/${repo}`,
+    method: 'GET',
+    noCache: true,
+    success422: true,
+    noShowErrMsg: true,
+    headers: { Authorization: `Bearer ${token}` }
+  })
+}

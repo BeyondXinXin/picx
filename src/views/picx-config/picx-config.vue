@@ -57,27 +57,16 @@
               </template>
               <div class="dir-box border-box">
                 <el-radio-group class="dir-item" v-model="userConfigInfo.dirMode" @change="dirModeChange">
-                  <el-radio label="rootDir">{{ $t('config_page.root_dir') }}</el-radio>
-                  <el-tooltip :content="$t('config_page.date_dir_tip')" placement="top" :offset="0">
-                    <el-radio label="dateDir">{{ $t('config_page.date_dir') }}</el-radio>
-                  </el-tooltip>
+
+                  <el-radio label="dateDir">{{ $t('config_page.date_dir') }}</el-radio>
                   <el-radio label="repoDir" v-if="userConfigInfo.dirList.length">
-                    {{ $t('config_page.repo_dir') }}
-                  </el-radio>
-                  <el-tooltip :content="$t('config_page.input_new_dir')" placement="top" :offset="0">
-                    <el-radio label="newDir">{{ $t('config_page.create_new_dir') }}</el-radio>
-                  </el-tooltip>
+                    {{ $t('config_page.repo_dir') }}</el-radio>
+
                 </el-radio-group>
 
                 <!-- 根目录 / 日期目录 -->
-                <el-input class="dir-item" v-if="userConfigInfo.dirMode === DirModeEnum.rootDir ||
-      userConfigInfo.dirMode === DirModeEnum.dateDir
-      " v-model="userConfigInfo.selectedDir" readonly></el-input>
-
-                <!-- 新建目录 -->
-                <el-input class="dir-item" v-if="userConfigInfo.dirMode === DirModeEnum.newDir" ref="newDirInputRef"
-                  v-model="userConfigInfo.selectedDir" @input="persistUserConfigInfo()" clearable
-                  :placeholder="$t('config_page.placeholder_4')"></el-input>
+                <el-input class="dir-item" v-if="userConfigInfo.dirMode === DirModeEnum.dateDir"
+                  v-model="userConfigInfo.selectedDir" readonly></el-input>
 
                 <!-- 仓库目录 -->
                 <div class="dir-item" v-if="userConfigInfo.dirMode === DirModeEnum.repoDir">
@@ -87,6 +76,7 @@
                     <IEpRefresh />
                   </el-icon>
                 </div>
+
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -168,24 +158,10 @@ const authorizationInfo = computed(() => store.getters.getGitHubAuthorizationInf
 
 const dirModeChange = (dirMode: DirModeEnum) => {
   switch (dirMode) {
-    // 根目录
-    case DirModeEnum.rootDir:
-      userConfigInfo.selectedDir = '/'
-      break
 
     // 日期目录，根据当天日期自动生成
     case DirModeEnum.dateDir:
       userConfigInfo.selectedDir = formatDatetime('yyyyMMdd')
-      break
-
-    // 手动输入的新建目录
-    case DirModeEnum.newDir:
-      if (userConfigInfo.selectedDirList.length) {
-        userConfigInfo.selectedDir = userConfigInfo.selectedDirList.join('/')
-      } else {
-        userConfigInfo.selectedDir = 'xxx'
-      }
-      newDirInputRef.value?.focus()
       break
 
     // 仓库目录
